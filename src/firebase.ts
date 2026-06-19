@@ -31,8 +31,26 @@ try {
 }
 
 // Check if we have active Firestore
+let isDbOnlineSecured = false;
+let dbErrorString: string | null = null;
+const statusListeners = new Set<(online: boolean, err: string | null) => void>();
+
+export function registerDbStatusListener(listener: (online: boolean, err: string | null) => void) {
+  statusListeners.add(listener);
+  listener(isDbOnlineSecured, dbErrorString);
+  return () => {
+    statusListeners.delete(listener);
+  };
+}
+
+function updateDbStatus(online: boolean, err: string | null) {
+  isDbOnlineSecured = online;
+  dbErrorString = err;
+  statusListeners.forEach(l => l(online, err));
+}
+
 export function isFirebaseConnected(): boolean {
-  return db !== null;
+  return db !== null && isDbOnlineSecured;
 }
 
 // Live sync broadcast channel for local-only fallback (real-time cross-tab sync)
@@ -64,9 +82,11 @@ export async function savePlayerData(player: PlayerName, data: PlayerData): Prom
     try {
       const playerDocRef = doc(db, "players", player);
       await setDoc(playerDocRef, data);
+      updateDbStatus(true, null);
       return;
-    } catch (e) {
+    } catch (e: any) {
       console.error("Firestore save failed, writing to fallback local storage", e);
+      updateDbStatus(false, e?.message || "فشلت عملية حفظ البيانات في Firestore");
       saveLocalPlayerData(player, data);
       throw e;
     }
@@ -88,6 +108,7 @@ export function listenToPlayerData(
       const unsubscribe = onSnapshot(
         playerDocRef,
         (snapshot) => {
+          updateDbStatus(true, null);
           if (snapshot.exists()) {
             const data = snapshot.data() as PlayerData;
             onUpdate(data);
@@ -99,14 +120,16 @@ export function listenToPlayerData(
         },
         (error) => {
           console.error("Firestore listen error: ", error);
+          updateDbStatus(false, error?.message || "فشلت عملية القراءة المباشرة من Firestore. الرجاء التحقق من القواعد (Rules).");
           if (onError) onError(error);
           // Fallback to local
           onUpdate(getLocalPlayerData(player));
         }
       );
       return unsubscribe;
-    } catch (e) {
+    } catch (e: any) {
       console.error("Snapshot binding error, falling back to local listener", e);
+      updateDbStatus(false, e?.message || "خطأ في ربط مستمع البيانات");
     }
   }
 

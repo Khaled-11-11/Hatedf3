@@ -7,7 +7,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { DayData, PlayerData, PlayerName } from "./types";
 import { getSecondsUntilMidnight, getTodayDateString, formatDuration, getArabicDateString, setVirtualDate, resetVirtualDate } from "./utils/dateUtils";
 import { calculatePlayerStats, reconcilePlayerDays } from "./utils/challengeLogic";
-import { listenToPlayerData, savePlayerData, isFirebaseConnected } from "./firebase";
+import { listenToPlayerData, savePlayerData, isFirebaseConnected, registerDbStatusListener } from "./firebase";
 
 // Components
 import Splash from "./components/Splash";
@@ -33,6 +33,18 @@ export default function App() {
   const [simulatedDate, setSimulatedDate] = useState<string>(() => {
     return getTodayDateString(new Date());
   });
+
+  // Database Connection Status State
+  const [isDbOnline, setIsDbOnline] = useState<boolean>(false);
+  const [dbError, setDbError] = useState<string | null>(null);
+
+  // Subscribe to live database connection status
+  useEffect(() => {
+    return registerDbStatusListener((online, err) => {
+      setIsDbOnline(online);
+      setDbError(err);
+    });
+  }, []);
 
   // Countdown clock state
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
@@ -196,8 +208,6 @@ export default function App() {
     countdownColor = "text-orange-400 animate-pulse";
   }
 
-  const isDbOnline = isFirebaseConnected();
-
   return (
     <div className="min-h-screen pb-16 relative selection:bg-violet-500/30 selection:text-white">
       {/* Dynamic Splash router */}
@@ -285,6 +295,30 @@ export default function App() {
                 </div>
               </div>
             </header>
+
+            {dbError && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-4 rounded-xl mb-6 text-right font-sans flex flex-col gap-1" dir="rtl">
+                <div className="font-bold flex items-center gap-2 text-red-400">
+                  <span>⚠️ تنبيه: فشل الاتصال بقاعدة بيانات Firebase</span>
+                </div>
+                <p className="text-xs text-gray-300 font-mono mt-1 select-all">
+                  {dbError}
+                </p>
+                <div className="text-[11px] mt-1 text-gray-400 leading-relaxed font-sans">
+                  هذا يعود عادةً إلى أن <strong className="text-white">قواعد الحماية (Security Rules)</strong> لـ Firestore في لوحة تحكم Firebase مغلقة (Locked Mode).
+                  <br />
+                  <strong className="text-white">طريقة الحل السريعة:</strong>
+                  <ol className="list-decimal list-inside mt-1 space-y-1 text-gray-300">
+                    <li>اذهب إلى <strong className="text-white">Firebase Console</strong></li>
+                    <li>اختر <strong className="text-white">Firestore Database</strong> من القائمة الجانبية</li>
+                    <li>انقر على تبويب <strong className="text-white">Rules</strong> في الأعلى</li>
+                    <li>قم بتعديل السطر لتسمح بالقراءة والكتابة للجميع: <code className="bg-slate-950 text-emerald-400 px-1.5 py-0.5 rounded font-mono">allow read, write: if true;</code></li>
+                    <li>انقر على زر <strong className="text-white">Publish</strong></li>
+                  </ol>
+                  <p className="mt-2 text-amber-400">⚠️ حالياً، يعمل التطبيق في وضع "الحفظ المحلي" (Local Storage) مؤقتاً لحماية عملك من الضياع، ولكنه لن يتزامن مع جهاز صديقك حتى تفعل الخطوة السابقة.</p>
+                </div>
+              </div>
+            )}
 
             {/* Statistics Section Dashboard */}
             <Dashboard mohamedStats={mohamedStats} khaledStats={khaledStats} />
