@@ -1,0 +1,6 @@
+{
+  "name": "تحدي الالتزام اليومي",
+  "description": "نظام وتطبيق ويب متكامل لمتابعة ومزامنة التحدي اليومي للالتزام بالمهام والأنشطة بين محمد وخالد مع احتساب الغرامات الإحصائية فورا بالوقت الفعلي",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
