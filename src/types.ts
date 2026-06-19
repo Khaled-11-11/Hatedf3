@@ -40,5 +40,5 @@ export const DEFAULT_TASKS = [
   "Meeting مع الطرف الآخر"
 ];
 
-export const CHALLENGE_START_DATE = "2026-06-20";
+export const CHALLENGE_START_DATE = "2026-06-19";
 export const CHALLENGE_END_DATE = "2026-12-31";
