@@ -3,61 +3,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getFirestore, doc, setDoc, onSnapshot, getDoc, Firestore } from "firebase/firestore";
-import { PlayerData, FirebaseConfig, PlayerName } from "./types";
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore, doc, setDoc, onSnapshot, Firestore } from "firebase/firestore";
+import { PlayerData, PlayerName } from "./types";
 
-// Key for local storage
-const STORAGE_CONFIG_KEY = "firebase_challenge_config";
 const LOCAL_PLAYER_PREFIX = "player_days_v1_";
 
-// Try to load user configuration from local storage
-export function getSavedFirebaseConfig(): FirebaseConfig | null {
-  try {
-    const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
-    if (saved) {
-      const config = JSON.parse(saved);
-      if (config.apiKey && config.projectId) {
-        return config;
-      }
-    }
-  } catch (e) {
-    console.error("Failed to load Firebase config from localStorage", e);
-  }
-  return null;
-}
+// Firebase config ثابتة — لا تعديل مطلوب من المستخدم
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBJhgSDyCaZztJu0nU5hmkHai5LKf61qLk",
+  authDomain: "hatedf3-19155.firebaseapp.com",
+  projectId: "hatedf3-19155",
+  storageBucket: "hatedf3-19155.appspot.com",
+  messagingSenderId: "1015805743453",
+  appId: "1:1015805743453:web:bed3c47dc9bea2786158b4"
+};
 
-export function saveFirebaseConfig(config: FirebaseConfig) {
-  localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify(config));
-}
-
-export function clearFirebaseConfig() {
-  localStorage.removeItem(STORAGE_CONFIG_KEY);
-}
-
-// Global Firebase state
-let app: FirebaseApp | null = null;
+// تهيئة Firebase تلقائياً عند تحميل الملف
 let db: Firestore | null = null;
-
-export function initFirebase(config: FirebaseConfig): boolean {
-  try {
-    const existingApps = getApps();
-    const existingApp = existingApps.find(a => a.name === "commitment_app");
-    
-    if (existingApp) {
-      app = existingApp;
-    } else {
-      app = initializeApp(config, "commitment_app");
-    }
-    
-    db = getFirestore(app);
-    return true;
-  } catch (error) {
-    console.error("Firebase init failed: ", error);
-    db = null;
-    app = null;
-    return false;
-  }
+try {
+  const existingApps = getApps();
+  const existingApp = existingApps.find(a => a.name === "commitment_app");
+  const app = existingApp ?? initializeApp(FIREBASE_CONFIG, "commitment_app");
+  db = getFirestore(app);
+} catch (error) {
+  console.error("Firebase auto-initialization failed:", error);
 }
 
 // Check if we have active Firestore
@@ -67,12 +37,6 @@ export function isFirebaseConnected(): boolean {
 
 // Live sync broadcast channel for local-only fallback (real-time cross-tab sync)
 const localSyncChannel = typeof window !== 'undefined' ? new BroadcastChannel('commitment_local_sync') : null;
-
-// Initialize with saved config if available
-const initialConfig = getSavedFirebaseConfig();
-if (initialConfig) {
-  initFirebase(initialConfig);
-}
 
 // Local simulation fallback
 export function getLocalPlayerData(player: PlayerName): PlayerData {
