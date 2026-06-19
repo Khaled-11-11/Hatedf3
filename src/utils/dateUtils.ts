@@ -46,30 +46,16 @@ export function getArabicDateString(dateStr: string): string {
   }
 }
 
-// Global active virtual date for simulation
-let virtualDateOffsetMs = 0;
-
 export function getSystemNow(): Date {
-  return new Date(Date.now() + virtualDateOffsetMs);
+  return new Date(); // دايماً الوقت الحقيقي
 }
 
-export function setVirtualDate(simulatedDateString: string) {
-  const parts = simulatedDateString.split('-');
-  if (parts.length === 3) {
-    const simDate = new Date(
-      parseInt(parts[0], 10),
-      parseInt(parts[1], 10) - 1,
-      parseInt(parts[2], 10),
-      12, // Default to noon for daily tests
-      0,
-      0
-    );
-    virtualDateOffsetMs = simDate.getTime() - Date.now();
-  }
+export function setVirtualDate(_simulatedDateString: string) {
+  // لا يفعل شيء — الوقت دايماً حقيقي
 }
 
 export function resetVirtualDate() {
-  virtualDateOffsetMs = 0;
+  // لا يفعل شيء
 }
 
 // Returns YYYY-MM-DD

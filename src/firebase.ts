@@ -41,12 +41,15 @@ let db: Firestore | null = null;
 
 export function initFirebase(config: FirebaseConfig): boolean {
   try {
-    if (getApps().length > 0) {
-      // Clean up previous app if it exists
-      const existing = getApp();
-      // Wait, firebase doesn't easily allow clean re-init without deletion, but we can register a specific named app or check if details changed.
+    const existingApps = getApps();
+    const existingApp = existingApps.find(a => a.name === "commitment_app");
+    
+    if (existingApp) {
+      app = existingApp;
+    } else {
+      app = initializeApp(config, "commitment_app");
     }
-    app = initializeApp(config, "commitment_app");
+    
     db = getFirestore(app);
     return true;
   } catch (error) {

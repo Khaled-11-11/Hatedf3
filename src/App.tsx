@@ -32,8 +32,7 @@ export default function App() {
 
   // Date Simulation State
   const [simulatedDate, setSimulatedDate] = useState<string>(() => {
-    const saved = localStorage.getItem("simulated_active_date");
-    return saved || getTodayDateString(new Date());
+    return getTodayDateString(new Date());
   });
 
   // Countdown clock state
@@ -53,7 +52,6 @@ export default function App() {
 
   // Update simulation date changes
   useEffect(() => {
-    localStorage.setItem("simulated_active_date", simulatedDate);
     setVirtualDate(simulatedDate);
     
     // Trigger reconciliations for both players with the new simulated date
@@ -117,17 +115,8 @@ export default function App() {
 
       // Roll over checklist automatically when countdown hits exactly 0
       if (left <= 0) {
-        // Increment date by 1 day as simulation
-        const currentParts = simulatedDate.split('-');
-        if (currentParts.length === 3) {
-          const nextDateObj = new Date(
-            parseInt(currentParts[0], 10),
-            parseInt(currentParts[1], 10) - 1,
-            parseInt(currentParts[2], 10) + 1
-          );
-          const nextDateStr = getTodayDateString(nextDateObj);
-          setSimulatedDate(nextDateStr);
-        }
+        const nextDateStr = getTodayDateString(new Date());
+        setSimulatedDate(nextDateStr);
       }
     }, 1000);
 
